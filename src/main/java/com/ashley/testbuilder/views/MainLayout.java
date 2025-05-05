@@ -93,7 +93,6 @@ public class MainLayout extends AppLayout {
 
         for (MenuItemInfo menuItem : createMenuItems()) {
             list.add(menuItem);
-
         }
 
         header.add(layout, nav);
@@ -104,10 +103,7 @@ public class MainLayout extends AppLayout {
         return new MenuItemInfo[]{ //
                 new MenuItemInfo("Home", LineAwesomeIcon.HOME_SOLID.create(), HomeView.class), //
 
-                new MenuItemInfo("Testview", LineAwesomeIcon.CHART_AREA_SOLID.create(), TestviewView.class), //
-
                 new MenuItemInfo("Builder", LineAwesomeIcon.FILE.create(), BuilderView.class), //
-
         };
     }
 

@@ -1,159 +1,120 @@
 package com.ashley.testbuilder.views.home;
 
+import com.ashley.testbuilder.data.entity.Test;
+import com.ashley.testbuilder.service.BuilderApplicationService;
+import com.ashley.testbuilder.testRunner.TestRun;
+import com.ashley.testbuilder.testRunner.TestRunner;
 import com.ashley.testbuilder.views.MainLayout;
+import com.ashley.testbuilder.views.builder.BuilderView;
+import com.vaadin.flow.component.ClickEvent;
+import com.vaadin.flow.component.ComponentEventListener;
+import com.vaadin.flow.component.contextmenu.MenuItem;
+import com.vaadin.flow.component.contextmenu.SubMenu;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.GridVariant;
 import com.vaadin.flow.component.html.Div;
-import com.vaadin.flow.component.html.Image;
-import com.vaadin.flow.component.html.Span;
-import com.vaadin.flow.component.icon.Icon;
-import com.vaadin.flow.component.icon.VaadinIcon;
+import com.vaadin.flow.component.menubar.MenuBar;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
-import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.router.AfterNavigationEvent;
 import com.vaadin.flow.router.AfterNavigationObserver;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.router.RouteAlias;
-import java.util.Arrays;
-import java.util.List;
 
 @PageTitle("Home")
 @Route(value = "home", layout = MainLayout.class)
 @RouteAlias(value = "", layout = MainLayout.class)
 public class HomeView extends Div implements AfterNavigationObserver {
 
-    Grid<Person> grid = new Grid<>();
+	private Grid<Test> grid = new Grid<>();
+	private BuilderApplicationService service;
 
-    public HomeView() {
-        addClassName("home-view");
-        setSizeFull();
-        grid.setHeight("100%");
-        grid.addThemeVariants(GridVariant.LUMO_NO_BORDER, GridVariant.LUMO_NO_ROW_BORDERS);
-        grid.addComponentColumn(person -> createCard(person));
-        add(grid);
-    }
+	public HomeView(BuilderApplicationService service) {
+		this.service = service;
+		addClassName("home-view");
+		setSizeFull();
+		grid.setHeight("100%");
+		grid.addThemeVariants(GridVariant.LUMO_NO_BORDER, GridVariant.LUMO_NO_ROW_BORDERS);
+		grid.addComponentColumn(test -> createCard(test));
+		add(grid);
+	}
 
-    private HorizontalLayout createCard(Person person) {
-        HorizontalLayout card = new HorizontalLayout();
-        card.addClassName("card");
-        card.setSpacing(false);
-        card.getThemeList().add("spacing-s");
+	private HorizontalLayout createCard(Test test) {
 
-        Image image = new Image();
-        image.setSrc(person.getImage());
-        VerticalLayout description = new VerticalLayout();
-        description.addClassName("description");
-        description.setSpacing(false);
-        description.setPadding(false);
+		HorizontalLayout card = new HorizontalLayout();
+		card.addClassName("card");
+		card.setSpacing(false);
+		card.getThemeList().add("spacing-s");
 
-        HorizontalLayout header = new HorizontalLayout();
-        header.addClassName("header");
-        header.setSpacing(false);
-        header.getThemeList().add("spacing-s");
+		TextArea nameArea = new TextArea();
+		nameArea.setReadOnly(true);
+		nameArea.setLabel("Test Version");
+		nameArea.setValue(test.getName());
 
-        Span name = new Span(person.getName());
-        name.addClassName("name");
-        Span date = new Span(person.getDate());
-        date.addClassName("date");
-        header.add(name, date);
+		nameArea.getStyle().set("border-color", "transparent");
 
-        Span post = new Span(person.getPost());
-        post.addClassName("post");
+		TextArea lastRunDate = new TextArea();
+		lastRunDate.setReadOnly(true);
+		lastRunDate.setLabel("Last Run Date");
+		lastRunDate.setValue("14/07/2023");
 
-        HorizontalLayout actions = new HorizontalLayout();
-        actions.addClassName("actions");
-        actions.setSpacing(false);
-        actions.getThemeList().add("spacing-s");
+		TextArea passRate = new TextArea();
+		passRate.setReadOnly(true);
+		passRate.setLabel("Pass Rate");
+		passRate.setValue("100%");
 
-        Icon likeIcon = VaadinIcon.HEART.create();
-        likeIcon.addClassName("icon");
-        Span likes = new Span(person.getLikes());
-        likes.addClassName("likes");
-        Icon commentIcon = VaadinIcon.COMMENT.create();
-        commentIcon.addClassName("icon");
-        Span comments = new Span(person.getComments());
-        comments.addClassName("comments");
-        Icon shareIcon = VaadinIcon.CONNECT.create();
-        shareIcon.addClassName("icon");
-        Span shares = new Span(person.getShares());
-        shares.addClassName("shares");
+		MenuBar menuBar = new MenuBar();
+		menuBar.setOpenOnHover(true);
+		MenuItem actions = menuBar.addItem("Actions");
+		SubMenu actionsSubMenu = actions.getSubMenu();
+		actionsSubMenu.addItem("Run", new RunTestClickListener(test));
+		actionsSubMenu.addItem("Edit", new EditTestClickListener(test));
+		actionsSubMenu.addItem("Info");
 
-        actions.add(likeIcon, likes, commentIcon, comments, shareIcon, shares);
+		card.setWidth("70%");
+		card.add(nameArea, lastRunDate, passRate, menuBar);
+		return card;
+	}
 
-        description.add(header, post, actions);
-        card.add(image, description);
-        return card;
-    }
+	@Override
+	public void afterNavigation(AfterNavigationEvent event) {
 
-    @Override
-    public void afterNavigation(AfterNavigationEvent event) {
+		grid.setItems(service.findTests());
+	}
 
-        // Set some data when this view is displayed.
-        List<Person> persons = Arrays.asList( //
-                createPerson("https://randomuser.me/api/portraits/men/42.jpg", "John Smith", "May 8",
-                        "In publishing and graphic design, Lorem ipsum is a placeholder text commonly used to demonstrate the visual form of a document without relying on meaningful content (also called greeking).",
-                        "1K", "500", "20"),
-                createPerson("https://randomuser.me/api/portraits/women/42.jpg", "Abagail Libbie", "May 3",
-                        "In publishing and graphic design, Lorem ipsum is a placeholder text commonly used to demonstrate the visual form of a document without relying on meaningful content (also called greeking).",
-                        "1K", "500", "20"),
-                createPerson("https://randomuser.me/api/portraits/men/24.jpg", "Alberto Raya", "May 3",
+	class EditTestClickListener implements ComponentEventListener<ClickEvent<MenuItem>>
+	{
+		private Test test;
+		
+		public EditTestClickListener(Test test) {
+			this.test = test;
+		}
+		
+		@Override
+		public void onComponentEvent(ClickEvent<MenuItem> event) {
+			event.getSource().getUI().ifPresent(ui -> ui.navigate(BuilderView.class, String.valueOf(test.getId())));
+		}
+		
+	}
+	
+	class RunTestClickListener implements ComponentEventListener<ClickEvent<MenuItem>> {
+		private Test test;
 
-                        "In publishing and graphic design, Lorem ipsum is a placeholder text commonly used to demonstrate the visual form of a document without relying on meaningful content (also called greeking).",
-                        "1K", "500", "20"),
-                createPerson("https://randomuser.me/api/portraits/women/24.jpg", "Emmy Elsner", "Apr 22",
+		public RunTestClickListener(Test test) {
+			this.test = test;
+		}
 
-                        "In publishing and graphic design, Lorem ipsum is a placeholder text commonly used to demonstrate the visual form of a document without relying on meaningful content (also called greeking).",
-                        "1K", "500", "20"),
-                createPerson("https://randomuser.me/api/portraits/men/76.jpg", "Alf Huncoot", "Apr 21",
+		@Override
+		public void onComponentEvent(ClickEvent<MenuItem> event) {
+			
+			TestRun run = new TestRun(test);
+			run.addOption("--remote-allow-origins=*");
+			
+			System.out.println(test.getSteps().toString());
+			
+			new TestRunner(run).runTest();
+		}
 
-                        "In publishing and graphic design, Lorem ipsum is a placeholder text commonly used to demonstrate the visual form of a document without relying on meaningful content (also called greeking).",
-                        "1K", "500", "20"),
-                createPerson("https://randomuser.me/api/portraits/women/76.jpg", "Lidmila Vilensky", "Apr 17",
-
-                        "In publishing and graphic design, Lorem ipsum is a placeholder text commonly used to demonstrate the visual form of a document without relying on meaningful content (also called greeking).",
-                        "1K", "500", "20"),
-                createPerson("https://randomuser.me/api/portraits/men/94.jpg", "Jarrett Cawsey", "Apr 17",
-                        "In publishing and graphic design, Lorem ipsum is a placeholder text commonly used to demonstrate the visual form of a document without relying on meaningful content (also called greeking).",
-                        "1K", "500", "20"),
-                createPerson("https://randomuser.me/api/portraits/women/94.jpg", "Tania Perfilyeva", "Mar 8",
-
-                        "In publishing and graphic design, Lorem ipsum is a placeholder text commonly used to demonstrate the visual form of a document without relying on meaningful content (also called greeking).",
-                        "1K", "500", "20"),
-                createPerson("https://randomuser.me/api/portraits/men/16.jpg", "Ivan Polo", "Mar 5",
-
-                        "In publishing and graphic design, Lorem ipsum is a placeholder text commonly used to demonstrate the visual form of a document without relying on meaningful content (also called greeking).",
-                        "1K", "500", "20"),
-                createPerson("https://randomuser.me/api/portraits/women/16.jpg", "Emelda Scandroot", "Mar 5",
-
-                        "In publishing and graphic design, Lorem ipsum is a placeholder text commonly used to demonstrate the visual form of a document without relying on meaningful content (also called greeking).",
-                        "1K", "500", "20"),
-                createPerson("https://randomuser.me/api/portraits/men/67.jpg", "Marcos Sá", "Mar 4",
-
-                        "In publishing and graphic design, Lorem ipsum is a placeholder text commonly used to demonstrate the visual form of a document without relying on meaningful content (also called greeking).",
-                        "1K", "500", "20"),
-                createPerson("https://randomuser.me/api/portraits/women/67.jpg", "Jacqueline Asong", "Mar 2",
-
-                        "In publishing and graphic design, Lorem ipsum is a placeholder text commonly used to demonstrate the visual form of a document without relying on meaningful content (also called greeking).",
-                        "1K", "500", "20")
-
-        );
-
-        grid.setItems(persons);
-    }
-
-    private static Person createPerson(String image, String name, String date, String post, String likes,
-            String comments, String shares) {
-        Person p = new Person();
-        p.setImage(image);
-        p.setName(name);
-        p.setDate(date);
-        p.setPost(post);
-        p.setLikes(likes);
-        p.setComments(comments);
-        p.setShares(shares);
-
-        return p;
-    }
-
+	}
 }
