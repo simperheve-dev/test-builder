@@ -13,6 +13,9 @@ import com.vaadin.flow.component.html.ListItem;
 import com.vaadin.flow.component.html.Nav;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.html.UnorderedList;
+import com.vaadin.flow.component.orderedlayout.FlexComponent;
+import com.vaadin.flow.component.orderedlayout.FlexComponent.Alignment;
+import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.RouterLink;
 import com.vaadin.flow.theme.lumo.LumoUtility.AlignItems;
 import com.vaadin.flow.theme.lumo.LumoUtility.BoxSizing;
@@ -48,12 +51,12 @@ public class MainLayout extends AppLayout {
             RouterLink link = new RouterLink();
             // Use Lumo classnames for various styling
             link.addClassNames(Display.FLEX, Gap.XSMALL, Height.MEDIUM, AlignItems.CENTER, Padding.Horizontal.SMALL,
-                    TextColor.BODY);
+                    TextColor.BODY, ListStyleType.NONE);
             link.setRoute(view);
 
             Span text = new Span(menuTitle);
             // Use Lumo classnames for various styling
-            text.addClassNames(FontWeight.MEDIUM, FontSize.MEDIUM, Whitespace.NOWRAP);
+            text.addClassNames(FontWeight.MEDIUM, FontSize.MEDIUM, Whitespace.NOWRAP, ListStyleType.NONE);
 
             if (icon != null) {
                 link.add(icon);
@@ -70,39 +73,41 @@ public class MainLayout extends AppLayout {
 
     public MainLayout() {
         addToNavbar(createHeaderContent());
+        addToDrawer(createNavMenu());
     }
 
     private Component createHeaderContent() {
         Header header = new Header();
         header.addClassNames(BoxSizing.BORDER, Display.FLEX, FlexDirection.COLUMN, Width.FULL);
-
+        
         Div layout = new Div();
         layout.addClassNames(Display.FLEX, AlignItems.CENTER, Padding.Horizontal.LARGE);
-
+        
         H1 appName = new H1("Test Builder");
         appName.addClassNames(Margin.Vertical.MEDIUM, Margin.End.AUTO, FontSize.LARGE);
         layout.add(appName);
 
-        Nav nav = new Nav();
-        nav.addClassNames(Display.FLEX, Overflow.AUTO, Padding.Horizontal.MEDIUM, Padding.Vertical.XSMALL);
-
-        // Wrap the links in a list; improves accessibility
-        UnorderedList list = new UnorderedList();
-        list.addClassNames(Display.FLEX, Gap.SMALL, ListStyleType.NONE, Margin.NONE, Padding.NONE);
-        nav.add(list);
-
-        for (MenuItemInfo menuItem : createMenuItems()) {
-            list.add(menuItem);
-        }
-
-        header.add(layout, nav);
+        VerticalLayout headerLayout = new VerticalLayout(Alignment.CENTER, layout);
+        
+        header.add(headerLayout);
         return header;
     }
-
+    
+    private Component createNavMenu()
+    {
+        VerticalLayout navMenu = new VerticalLayout(Alignment.CENTER);
+        navMenu.addClassName(ListStyleType.NONE);
+        
+        for (MenuItemInfo menuItem : createMenuItems()) {
+        	navMenu.add(menuItem);
+        }
+        
+    	return navMenu;
+    }
+    
     private MenuItemInfo[] createMenuItems() {
         return new MenuItemInfo[]{ //
                 new MenuItemInfo("Home", LineAwesomeIcon.HOME_SOLID.create(), HomeView.class), //
-
                 new MenuItemInfo("Builder", LineAwesomeIcon.FILE.create(), BuilderView.class), //
         };
     }
