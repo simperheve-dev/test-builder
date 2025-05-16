@@ -13,13 +13,17 @@ import com.ashley.testbuilder.views.MainLayout;
 import com.vaadin.flow.component.ClickEvent;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.ComponentEventListener;
+import com.vaadin.flow.component.HasValue.ValueChangeListener;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.contextmenu.MenuItem;
+import com.vaadin.flow.component.contextmenu.SubMenu;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.GridVariant;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
+import com.vaadin.flow.component.menubar.MenuBar;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.select.Select;
@@ -48,11 +52,24 @@ public class BuilderView extends VerticalLayout implements AfterNavigationObserv
 		setWidth("100%");
 		grid.addThemeVariants(GridVariant.LUMO_NO_BORDER, GridVariant.LUMO_NO_ROW_BORDERS);
 		grid.addComponentColumn(step -> createStepCard(step));
-		add(new Button(new Icon(VaadinIcon.PLUS), e -> addNewStepDialog.open()));
-		add(new Button(new Icon(VaadinIcon.DISC), new SaveTestEvent(service, test)));
+		
+		add(createMenuBar());
 		add(grid);
 	}
 
+	private MenuBar createMenuBar()
+	{
+		MenuBar menuBar = new MenuBar();
+		
+		MenuItem addAction = menuBar.addItem("Add Action");
+		MenuItem saveAction = menuBar.addItem("Save");
+		
+		addAction.addClickListener(event -> addNewStepDialog.open());
+		saveAction.addClickListener(new SaveTestEvent(service, test));
+		
+		return menuBar;
+	}
+	
 	private HorizontalLayout createStepCard(Step step) {
 		HorizontalLayout card = new HorizontalLayout();
 		card.addClassName("card");
@@ -106,10 +123,14 @@ public class BuilderView extends VerticalLayout implements AfterNavigationObserv
 		
 		TextArea input = new TextArea();
 		input.setLabel("Input");
+		input.setVisible(false);
 		
 		Button saveButton = new Button("Add", new AddNewStepEvent(actionSelect, locator, input));
 		saveButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
 		Button cancelButton = new Button("Cancel", e -> dialog.close());
+		
+		actionSelect.addValueChangeListener(event -> locator.setLabel(actionSelect.getValue() == Action.NAVIGATE ? "URL" : "Locator"));
+		actionSelect.addValueChangeListener(event -> input.setVisible(actionSelect.getValue() == Action.INPUT ? true : false));
 		
 		dialog.getFooter().add(cancelButton, saveButton);
 		dialogLayout.add(actionSelect, locator, input);
@@ -173,7 +194,7 @@ public class BuilderView extends VerticalLayout implements AfterNavigationObserv
 		}
 	}
 	
-	class SaveTestEvent implements ComponentEventListener<ClickEvent<Button>>
+	class SaveTestEvent implements ComponentEventListener<ClickEvent<MenuItem>>
 	{
 		private BuilderApplicationService service;
 		private Test test;
@@ -184,7 +205,7 @@ public class BuilderView extends VerticalLayout implements AfterNavigationObserv
 		}
 
 		@Override
-		public void onComponentEvent(ClickEvent<Button> event) {
+		public void onComponentEvent(ClickEvent<MenuItem> event) {
 			service.saveTest(test);
 		}
 	}
